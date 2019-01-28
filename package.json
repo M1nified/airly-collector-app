@@ -1,0 +1,37 @@
+{
+  "name": "airly-collector-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "build:watch": "webpack --watch",
+    "start:dev": "webpack-dev-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/M1nified/airly-collector-app.git"
+  },
+  "author": "M1nified",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/M1nified/airly-collector-app/issues"
+  },
+  "homepage": "https://github.com/M1nified/airly-collector-app#readme",
+  "devDependencies": {
+    "css-loader": "^2.1.0",
+    "node-sass": "^4.11.0",
+    "sass-loader": "^7.1.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.4",
+    "vue": "^2.5.22",
+    "vue-loader": "^15.6.1",
+    "vue-router": "^3.0.2",
+    "vue-template-compiler": "^2.5.22",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "dependencies": {}
+}
