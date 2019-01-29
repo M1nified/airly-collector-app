@@ -99,10 +99,10 @@ export default Vue.extend({
       console.log(this.detailedRecord);
     },
     getRecordValue(record: any, valueName: string) {
-      const { value } = record.measurement.values.find(
+      const v = record.measurement.values.find(
         ({ name, value }: { name: string; value: any }) => name === valueName
       );
-      return value;
+      return v && v.value;
     }
   }
 });

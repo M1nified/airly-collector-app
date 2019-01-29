@@ -1,14 +1,15 @@
 {
-  "compilerOptions": {
-      "outDir": "./built/",
-      "sourceMap": true,
-      "strict": true,
-      "noImplicitReturns": true,
-      "module": "es2015",
-      "moduleResolution": "node",
-      "target": "es6"
-  },
-  "include": [
-      "./src/**/*"
-  ]
+    "compilerOptions": {
+        "outDir": "./built/",
+        "sourceMap": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": false,
+        "module": "es2015",
+        "moduleResolution": "node",
+        "target": "es6"
+    },
+    "include": [
+        "./src/**/*"
+    ]
 }

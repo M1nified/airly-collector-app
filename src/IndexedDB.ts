@@ -46,9 +46,9 @@ const dbInfo: any = {
                             "measurement.tillDateTime"]
                     }
                 )
-                objectStore.createIndex("installationId", "installationId");
-                objectStore.createIndex("fromDateTime", "measurement.fromDateTime", { unique: true });
-                objectStore.createIndex("tillDateTime", "measurement.tillDateTime", { unique: true });
+                objectStore.createIndex("installationId", "installationId", { unique: false });
+                objectStore.createIndex("fromDateTime", "measurement.fromDateTime", { unique: false });
+                objectStore.createIndex("tillDateTime", "measurement.tillDateTime", { unique: false });
             }
             if (!db.objectStoreNames.contains('forecastHistory')) {
                 const objectStore = db.createObjectStore(
@@ -98,7 +98,12 @@ const dbInfo: any = {
                             return new Promise((resolve, reject) => {
                                 const req: IDBRequest = objectStore.put(record);
                                 req.onsuccess = (event: any) => {
+                                    console.debug('measurement.putAll success')
                                     resolve(true);
+                                }
+                                req.onerror = (event: any) => {
+                                    console.error('measurement.putAll error', event, record)
+                                    reject();
                                 }
                             })
                         })
@@ -152,8 +157,10 @@ export function db(name: string) {
         throw `IndexedDB '${name}' is not supported.`;
     }
     const version = dbInfo[name].version;
-    function getDb(): Promise<IDBDatabase> {
-        return new Promise((resolve, reject) => {
+    async function getDb(): Promise<IDBDatabase> {
+        const persistent = await ensureDataPersistance();
+        console.log('PERSISTENT', persistent);
+        return await new Promise((resolve, reject) => {
             const request: IDBOpenDBRequest = indexedDB.open(name, version);
             request.onerror = event => {
                 reject(`IndexedDB error`);
@@ -178,4 +185,12 @@ export function db(name: string) {
         })
     }
     return dbInfo[name].methods(getDb);
+}
+async function ensureDataPersistance() {
+    if (navigator.storage && navigator.storage.persist) {
+        const persistent = await navigator.storage.persisted();
+        console.log('persistent', persistent)
+        return persistent || (await navigator.storage.persist());
+    }
+    return false;
 }
