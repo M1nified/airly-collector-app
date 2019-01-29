@@ -1,18 +1,14 @@
 import Vue from 'vue';
+import VueMaterial from 'vue-material';
+import 'vue-material/dist/vue-material.min.css';
+import VueRouter from 'vue-router';
 import HomeComponent from "./components/Home.vue";
+import InstallPromptComponent from "./components/InstallPrompt.vue";
 import SensorComponent from "./components/Sensor.vue";
 import SensorHistoryComponent from "./components/SensorHistory.vue";
-import InstallPromptComponent from "./components/InstallPrompt.vue";
-import VueRouter from 'vue-router';
-import VueMaterial from 'vue-material';
-import {
-    MdButton,
-    MdField,
-    MdContent,
-    MdTabs,
-    // MdInput
-} from 'vue-material/dist/components';
-import 'vue-material/dist/vue-material.min.css';
+import SettingsComponent from "./components/Settings.vue";
+import { updateMeasurements } from "./airly/AirlyMeasurementsGathering";
+import Store from "./Store";
 
 const router = new VueRouter({
     routes: [
@@ -30,14 +26,13 @@ const router = new VueRouter({
             ]
         },
         { path: '/sensors', name: 'sensors', component: HomeComponent },
+        { path: '/settings', name: 'settings', component: SettingsComponent },
         { path: '/', redirect: 'sensors' },
         // { path: '*', redirect: 'home' }
     ]
 })
 
 Vue.use(VueRouter);
-// Vue.use(MdButton);
-// Vue.use(MdField);
 Vue.use(VueMaterial);
 
 const app = new Vue({
@@ -50,15 +45,12 @@ const app = new Vue({
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-    })
+        navigator.serviceWorker.register('sw.js')
+            .then(registration => navigator.serviceWorker.ready)
+            .then(registration => {
+                navigator.serviceWorker.ready.then(function (swRegistration) {
+                    return swRegistration.sync.register('autoupdateAllSync');
+                });
+            })
+    });
 }
-
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.info('beforeinstallprompt')
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    deferredPrompt = e;
-});

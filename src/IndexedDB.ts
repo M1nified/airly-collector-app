@@ -16,8 +16,11 @@ const dbInfo: any = {
                     return new Promise((resolve, reject) => {
                         const req = objectStore.get(id);
                         req.onsuccess = (event: any) => {
-                            console.log('onsuccess', req.result)
                             resolve(req.result);
+                        }
+                        req.onerror = (event: any) => {
+                            console.error(event, id)
+                            reject(req.result);
                         }
                     })
                 },
@@ -34,7 +37,7 @@ const dbInfo: any = {
         }
     },
     History: {
-        version: 1,
+        version: 2,
         onupgradeneeded(db: IDBDatabase) {
             if (!db.objectStoreNames.contains('measurementHistory')) {
                 const objectStore = db.createObjectStore(
@@ -66,12 +69,23 @@ const dbInfo: any = {
                 objectStore.createIndex("tillDateTime", "measurement.tillDateTime", { unique: false });
                 objectStore.createIndex("predictionDateTime", "predictionDateTime", { unique: false });
             }
+            if (!db.objectStoreNames.contains('updates')) {
+                const objectStore = db.createObjectStore(
+                    "updates",
+                    {
+                        keyPath: [
+                            "installationId",
+                            "updateDateTime"]
+                    }
+                )
+                objectStore.createIndex("installationId", "installationId", { unique: false });
+                objectStore.createIndex("updateDateTime", "updateDateTime", { unique: false });
+            }
         },
         methods(getDb: Function): Record<any, any> {
             return {
                 measurement: {
                     async get(installationId: number) {
-                        console.log('get', installationId)
                         const db = await getDb();
                         const transaction = db.transaction(["measurementHistory"], "readonly");
                         const objectStore = transaction.objectStore("measurementHistory");
@@ -80,11 +94,10 @@ const dbInfo: any = {
                             const keyRange = IDBKeyRange.only(installationId);
                             const req = fromIndex.getAll(keyRange);
                             req.onsuccess = (event: any) => {
-                                console.log(req.result);
                                 resolve(req.result);
                             }
                             req.onerror = (event) => {
-                                console.error(event);
+                                console.error(event, installationId);
                                 reject(event);
                             }
                         })
@@ -98,7 +111,6 @@ const dbInfo: any = {
                             return new Promise((resolve, reject) => {
                                 const req: IDBRequest = objectStore.put(record);
                                 req.onsuccess = (event: any) => {
-                                    console.debug('measurement.putAll success')
                                     resolve(true);
                                 }
                                 req.onerror = (event: any) => {
@@ -120,12 +132,15 @@ const dbInfo: any = {
                             const keyRange = IDBKeyRange.bound(fromPredictionDateTime, tillPredictionDateTime)
                             const req = fromIndex.getAll(keyRange);
                             req.onsuccess = (event: any) => {
-                                console.log(req.result)
+                                resolve();
+                            }
+                            req.onerror = (event: any) => {
+                                console.error(event, fromPredictionDateTime, tillPredictionDateTime)
+                                reject();
                             }
                         })
                     },
                     async putAll(data: any[]) {
-                        console.debug(data)
                         const db = await getDb();
                         const transaction = db.transaction(["forecastHistory"], "readwrite");
                         const objectStore: IDBObjectStore = transaction.objectStore("forecastHistory");
@@ -133,11 +148,10 @@ const dbInfo: any = {
                             return new Promise((resolve, reject) => {
                                 const req: IDBRequest = objectStore.put(record);
                                 req.onsuccess = (event: any) => {
-                                    console.debug('complete')
                                     resolve(true);
                                 }
                                 req.onerror = (event: any) => {
-                                    console.error(event);
+                                    console.error(event, data);
                                     reject({
                                         event,
                                         record
@@ -147,9 +161,101 @@ const dbInfo: any = {
                         })
                         return Promise.all(promises);
                     }
+                },
+                updates: {
+                    async getMostRecent(installationId: number) {
+                        const db = await getDb();
+                        const transaction = db.transaction(["updates"], "readonly");
+                        const objectStore = transaction.objectStore("updates");
+                        return new Promise((resolve, reject) => {
+                            const fromIndex: IDBIndex = objectStore.index('installationId');
+                            const keyRange = IDBKeyRange.only(installationId)
+                            const req = fromIndex.getAll(keyRange);
+                            req.onsuccess = (event: any) => {
+                                const theMostRecent = req.result.reduce((mostRecent, current) => {
+                                    if (mostRecent.updateDateTime < current.updateDateTime)
+                                        return current;
+                                    return mostRecent;
+                                }, req.result[0] || {})
+                                resolve(theMostRecent);
+                            };
+                            req.onerror = (event: any) => {
+                                console.error(event, installationId);
+                                reject(event);
+                            }
+                        })
+                    },
+                    async put(data: any) {
+                        const db = await getDb();
+                        const transaction = db.transaction(["updates"], "readwrite");
+                        const objectStore = transaction.objectStore("updates");
+                        return await new Promise((resolve, reject) => {
+                            const req: IDBRequest = objectStore.put(data);
+                            req.onsuccess = (event: any) => {
+                                resolve(true);
+                            }
+                            req.onerror = (event: any) => {
+                                console.error('updates.put error', event, data)
+                                reject();
+                            }
+                        });
+                    }
                 }
             }
         }
+    },
+    Settings: {
+        version: 1,
+        onupgradeneeded(db: IDBDatabase) {
+            if (!db.objectStoreNames.contains('global')) {
+                const objectStore = db.createObjectStore(
+                    "global",
+                    { keyPath: "name" }
+                )
+                objectStore.createIndex("name", "name", { unique: true });
+                objectStore.createIndex("value", "value", { unique: false });
+            }
+
+        },
+        methods(getDb: Function): Record<any, any> {
+            return {
+                global: {
+                    async get(name: string) {
+                        const db = await getDb();
+                        const transaction = db.transaction(["global"], "readonly");
+                        const objectStore = transaction.objectStore("global");
+                        return new Promise((resolve, reject) => {
+                            const fromIndex: IDBIndex = objectStore.index('name');
+                            const keyRange = IDBKeyRange.only(name);
+                            const req = fromIndex.get(keyRange);
+                            req.onsuccess = (event: any) => {
+                                resolve(req.result);
+                            }
+                            req.onerror = (event) => {
+                                console.error(event);
+                                reject(event);
+                            }
+                        })
+                    },
+                    async put(setting: { name: string, value: any }) {
+                        const db = await getDb();
+                        const transaction = db.transaction(["global"], "readwrite");
+                        const objectStore = transaction.objectStore("global");
+                        return new Promise((resolve, reject) => {
+                            const req: IDBRequest = objectStore.put(setting);
+                            req.onsuccess = (event: any) => {
+                                resolve(true);
+                            }
+                            req.onerror = (event: any) => {
+                                console.error('measurement.putAll error', event, setting);
+                                reject(event);
+                            }
+                        })
+                    }
+                }
+            }
+        }
+
     }
 };
 export function db(name: string) {
@@ -159,14 +265,13 @@ export function db(name: string) {
     const version = dbInfo[name].version;
     async function getDb(): Promise<IDBDatabase> {
         const persistent = await ensureDataPersistance();
-        console.log('PERSISTENT', persistent);
+        console.debug('PERSISTENT', persistent);
         return await new Promise((resolve, reject) => {
             const request: IDBOpenDBRequest = indexedDB.open(name, version);
             request.onerror = event => {
                 reject(`IndexedDB error`);
             }
             request.onsuccess = (event: any) => {
-                console.log('success')
                 const db = event.target.result;
                 resolve(db);
             }
@@ -175,7 +280,7 @@ export function db(name: string) {
                 dbInfo[name].onupgradeneeded(db);
                 const transaction: IDBTransaction = event.target.transaction;
                 transaction.oncomplete = (event) => {
-                    console.log('upgraded')
+                    console.debug('upgraded')
                     resolve(db);
                 }
                 transaction.onerror = (event) => {
@@ -189,7 +294,6 @@ export function db(name: string) {
 async function ensureDataPersistance() {
     if (navigator.storage && navigator.storage.persist) {
         const persistent = await navigator.storage.persisted();
-        console.log('persistent', persistent)
         return persistent || (await navigator.storage.persist());
     }
     return false;

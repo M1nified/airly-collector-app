@@ -30,6 +30,21 @@ class Store {
             const id = (await this.installation(data)).id;
             const measurements = await db('History').measurement.get(id);
             return measurements;
+        },
+        async historyUpdateDateTime(data: InstallationArgument): Promise<{ installationId: number, updateDateTime: string }> {
+            const id = (await this.installation(data)).id;
+            const mostRecentUpdate = await db('History').updates.getMostRecent(id);
+            return mostRecentUpdate;
+        }
+    }
+    static Settings = {
+        async setting(name: string, value?: any) {
+            if (typeof value === 'undefined') {
+                const setting = await db('Settings').global.get(name);
+                return setting && setting.value;
+            } else {
+                return await db('Settings').global.put({ name, value });
+            }
         }
     }
 }

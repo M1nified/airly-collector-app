@@ -26,48 +26,63 @@
       @md-confirm="installationRemoveDialogOnConfirm"
       md-backdrop
     />
-
-    <div v-if="sensorToEdit && !sensorToEdit.saved">
-      <edit-sensor-component v-model="sensorToEdit" v-bind:onsave="editSensorOnSave"/>
-    </div>
-    <div class="md-layout md-alignment-center-left">
-      <div class="md-layout-item">
-        <md-field>
-          <label>ApiKey</label>
-          <md-input v-model="apiKey"></md-input>
-          <!-- <input class="md-input" v-model="apiKey"> -->
-        </md-field>
+    <my-md-app-component toolbar-title="Installations">
+      <div v-if="sensorToEdit && !sensorToEdit.saved">
+        <edit-sensor-component v-model="sensorToEdit" v-bind:onsave="editSensorOnSave"/>
       </div>
-      <div class="md-layout-item">
-        <md-button md-direction="right" @click="saveApiKey">save
-          <!-- <i class="material-icons">save</i> -->
-        </md-button>
-      </div>
-    </div>
-    <table class="installations-table">
-      <thead>
-        <tr>
-          <th>Id</th>
-          <th>City</th>
-          <th>Address</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(sensor) in sensors" :key="sensor.id">
-          <td class="installation-id">{{sensor.id}}</td>
-          <td>{{sensor.info && sensor.info.address.city}}</td>
-          <td>{{sensor.info && (({city, street, number}) => `${street} ${number}`)(sensor.info.address)}}</td>
-          <td>
-            <md-button class="md-icon-button" @click="removeSensor(sensor.id)">
-              <md-icon>delete</md-icon>
-            </md-button>
-            <md-button class="md-icon-button" @click="goToInstallation(sensor.id)">
-              <md-icon>view_list</md-icon>
-            </md-button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <md-card>
+        <md-table class="installations-table" v-model="sensors" md-sort="id" md-sort-order="asc">
+          <md-table-row>
+            <md-table-head>Id</md-table-head>
+            <md-table-head>City</md-table-head>
+            <md-table-head>Address</md-table-head>
+            <md-table-head>Last Update</md-table-head>
+          </md-table-row>
+          <md-table-row v-for="(sensor) in sensors" :key="sensor.id">
+            <md-table-cell class="installation-id">{{sensor.id}}</md-table-cell>
+            <md-table-cell>{{sensor.info && sensor.info.address.city}}</md-table-cell>
+            <md-table-cell>{{sensor.info && (({city, street, number}) => `${street} ${number}`)(sensor.info.address)}}</md-table-cell>
+            <md-table-cell>
+              <span v-if="sensor.updatedAt.diff.days > 1">{{sensor.updatedAt.diff.days}} days ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.days > 0"
+              >{{sensor.updatedAt.diff.days}} day ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.hours > 1"
+              >{{sensor.updatedAt.diff.hours}} hours ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.hours > 0"
+              >{{sensor.updatedAt.diff.hours}} hour ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.minutes > 1"
+              >{{sensor.updatedAt.diff.minutes}} minutes ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.minutes > 0"
+              >{{sensor.updatedAt.diff.minutes}} minute ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.seconds > 1"
+              >{{sensor.updatedAt.diff.seconds}} seconds ago</span>
+              <span
+                v-else-if="sensor.updatedAt.diff.seconds > 0"
+              >{{sensor.updatedAt.diff.seconds}} second ago</span>
+              <span v-else-if="sensor.updatedAt.diff.milliseconds > 0">Now</span>
+              <span v-else>Never</span>
+            </md-table-cell>
+            <md-table-cell>
+              <md-button class="md-icon-button" @click="removeSensor(sensor.id)">
+                <md-icon>delete</md-icon>
+              </md-button>
+              <md-button class="md-icon-button" @click="goToInstallation(sensor.id)">
+                <md-icon>folder_open</md-icon>
+              </md-button>
+              <md-button class="md-icon-button" @click="updateMeasurements(sensor.id)">
+                <md-icon>cached</md-icon>
+              </md-button>
+            </md-table-cell>
+          </md-table-row>
+        </md-table>
+      </md-card>
+    </my-md-app-component>
     <md-button
       class="md-icon-button md-fab md-fixed md-fab-bottom-right"
       @click="installationAddStart"
@@ -81,6 +96,9 @@
 import Vue from "vue";
 import Store from "../Store";
 import EditSensorComponent from "./EditSensor.vue";
+import MyMdAppComponent from "./MyMdApp.vue";
+import { updateMeasurements } from "./../airly/AirlyMeasurementsGathering";
+import { makeTimeObject } from "./../time";
 
 interface NewInstallationTemplate {
   id?: number | string;
@@ -100,12 +118,7 @@ const newInstallationTemplate: NewInstallationTemplate = {
 export default Vue.extend({
   props: [],
   data() {
-    const sensorsJson = localStorage.getItem("sensorIds"),
-      sensors: any[] = sensorsJson
-        ? JSON.parse(sensorsJson).map((id: string | number) => ({
-            id: id && parseInt(id.toString())
-          }))
-        : [];
+    const sensors: any[] = [];
     const apiKey = localStorage.getItem("apiKey");
     const sensorToEdit: any = undefined;
     console.log(sensors);
@@ -137,10 +150,9 @@ export default Vue.extend({
       this.sensors.push(sensor);
     },
     save() {},
-    saveInstallations() {
-      const ids = this.sensors.map(({ id }) => id),
-        json = JSON.stringify(ids);
-      localStorage.setItem("sensorIds", json);
+    async saveInstallations() {
+      const installations = this.sensors.map(({ id }) => ({ id }));
+      return await Store.Settings.setting("installations", installations);
     },
     saveApiKey() {
       console.log(this.apiKey);
@@ -173,6 +185,7 @@ export default Vue.extend({
       this.installationAddDialogActive = true;
     },
     async installationAddDialogSubmit() {
+      debugger;
       console.log("submit");
       this.installationAddDialogActive = false;
       console.log(this.installationAddInstance);
@@ -186,19 +199,30 @@ export default Vue.extend({
         }
       }
       if (appended) {
+        await this.saveInstallations();
         await this.installationsGetInfo();
-        this.saveInstallations();
       }
       console.log("submited");
     },
     async installationsGetInfo() {
+      const currentTime = new Date(Date.now());
+      const installations: any[] =
+        (await Store.Settings.setting("installations")) || [];
       this.sensors = await Promise.all(
-        this.sensors.map(async installation => {
+        installations.map(async installation => {
           try {
             const info = await Store.Airly.installationById(installation.id);
+            const updatedAt = makeTimeObject(
+              (await Store.Airly.historyUpdateDateTime({
+                id: installation.id
+              })).updateDateTime,
+              currentTime
+            );
+            console.debug("UPDATED AT", updatedAt);
             return {
               ...installation,
-              info
+              info,
+              updatedAt
             };
           } catch (ex) {
             return {
@@ -207,12 +231,18 @@ export default Vue.extend({
           }
         })
       );
+      return true;
+    },
+    async updateMeasurements(installationId: number) {
+      await updateMeasurements({ id: installationId });
+      this.installationsGetInfo();
     }
   },
   watch: {},
   computed: {},
   components: {
-    EditSensorComponent
+    EditSensorComponent,
+    MyMdAppComponent
   }
 });
 </script>
@@ -228,5 +258,9 @@ export default Vue.extend({
 }
 .md-dialog {
   max-width: 768px;
+}
+.md-card {
+  margin: 4px;
+  vertical-align: top;
 }
 </style>

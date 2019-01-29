@@ -1,3 +1,4 @@
+import Store from './../Store';
 export interface AirlyInstallationInfo {
     "id": number,
     "location": {
@@ -95,19 +96,19 @@ function measurementArgumentToQuery(endpoint: TemplateStringsArray, data: Measur
     }
     return `${urlCore}/${endpoint[0]}${url}`;
 }
-export class AirlyPull {
-    static getApiKey() {
-        const apiKey = localStorage.getItem('apiKey');
-        if (apiKey === null) {
-            throw 'No api key available in localStorage.';
-        }
-        return apiKey;
+async function getApiKey() {
+    const apiKey = await Store.Settings.setting('apiKey');
+    if (apiKey === null) {
+        throw 'No api key available in localStorage.';
     }
+    return apiKey;
+}
+export class AirlyPull {
     static async installation(data: InstallationArgument): Promise<AirlyInstallationInfo> {
         let requestInit: RequestInit = {};
         requestInit.headers = {
             Accept: 'application/json',
-            apiKey: this.getApiKey()
+            apiKey: await getApiKey()
         };
         const url = installationArgumentToQuery`installations/${data}`;
         console.log(url)
@@ -125,7 +126,7 @@ export class AirlyPull {
         let requestInit: RequestInit = {};
         requestInit.headers = {
             Accept: 'application/json',
-            apiKey: this.getApiKey()
+            apiKey: await getApiKey()
         };
         const url = measurementArgumentToQuery`measurements/${data}`;
 

@@ -1,14 +1,16 @@
 var path = require('path')
 var webpack = require('webpack')
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
-const WorkboxPlugin = require('workbox-webpack-plugin');
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: {
+        'dist/build': './src/app.ts',
+        'sw': './src/custom-service-worker.ts'
+    },
     output: {
-        path: path.resolve(__dirname, './dist'),
-        publicPath: '/dist/',
-        filename: 'build.js'
+        path: path.resolve(__dirname, '.'),
+        // publicPath: '/dist/',
+        filename: '[name].js'
     },
     module: {
         rules: [
@@ -59,8 +61,7 @@ module.exports = {
         ]
     },
     plugins: [
-        new VueLoaderPlugin(),
-        new WorkboxPlugin.GenerateSW()
+        new VueLoaderPlugin()
     ],
     resolve: {
         extensions: ['.ts', '.js', '.vue', '.json'],

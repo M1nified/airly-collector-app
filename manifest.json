@@ -1,8 +1,8 @@
 {
     "name": "Airly Collector",
     "short_name": "AirlyCollecor",
-    "theme_color": "#00aba9",
-    "background_color": "#00aba9",
+    "theme_color": "#448aff",
+    "background_color": "#448aff",
     "display": "standalone",
     "orientation": "landscape",
     "scope": "/",
