@@ -2,8 +2,8 @@ import { autoupdateAll, updateInstallationsAll } from './autoupdate';
 
 const CACHE_NAME = 'airly-collector-cache-v1';
 const urlsToCache = [
-    '/',
-    '/dist/build.js'
+    '/airly-collector-app/',
+    '/airly-collector-app/dist/build.js'
 ];
 
 self.addEventListener('install', async (event: any) => {

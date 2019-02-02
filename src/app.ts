@@ -47,7 +47,7 @@ const app = new Vue({
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('sw.js', { scope: '/airly-collector-app/' })
             .then(registration => navigator.serviceWorker.ready)
             .then(registration => {
                 navigator.serviceWorker.ready.then(function (swRegistration) {

@@ -67,7 +67,9 @@
               >{{sensor.updatedAt.diff.seconds}} second ago</span>
               <span v-else-if="sensor.updatedAt.diff.milliseconds > 0">Now</span>
               <span v-else>Never</span>
-              <md-tooltip md-direction="top">{{`${sensor.updatedAt.date.toLocaleDateString()} ${sensor.updatedAt.date.toLocaleTimeString()}`}}</md-tooltip>
+              <md-tooltip
+                md-direction="top"
+              >{{`${sensor.updatedAt.date.toLocaleDateString()} ${sensor.updatedAt.date.toLocaleTimeString()}`}}</md-tooltip>
             </md-table-cell>
             <md-table-cell>
               <md-button class="md-icon-button" @click="removeSensor(sensor.id)">
@@ -254,7 +256,7 @@ export default Vue.extend({
       this.installationsGetInfo();
     },
     async updateAllMeasurements() {
-      AppUpdate.castAutoupdateAll();
+      await AppUpdate.castAutoupdateAll();
     }
   },
   watch: {},

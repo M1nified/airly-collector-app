@@ -24,6 +24,8 @@
     "node-sass": "^4.11.0",
     "sass-loader": "^7.1.0",
     "serviceworker-webpack-plugin": "^1.0.1",
+    "terser-webpack-plugin": "^1.2.1",
+    "tether": "^1.4.5",
     "ts-loader": "^5.3.3",
     "typescript": "^3.2.4",
     "vue": "^2.5.22",
