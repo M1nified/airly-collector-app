@@ -5,8 +5,8 @@
     "background_color": "#448aff",
     "display": "standalone",
     "orientation": "landscape",
-    "scope": "/",
-    "start_url": "/",
+    "scope": "/airly-collector-app",
+    "start_url": "/airly-collector-app",
     "icons": [
         {
             "src": "images/icons/icon-72x72.png",

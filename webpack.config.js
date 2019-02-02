@@ -8,8 +8,8 @@ module.exports = {
         'sw': './src/custom-service-worker.ts'
     },
     output: {
-        path: path.resolve(__dirname, '.'),
-        // publicPath: '/dist/',
+        path: path.resolve(__dirname, './airly-collector-app/'),
+        publicPath: '/',
         filename: '[name].js'
     },
     module: {
@@ -71,7 +71,8 @@ module.exports = {
     },
     devServer: {
         historyApiFallback: true,
-        noInfo: true
+        noInfo: true,
+
     },
     performance: {
         hints: false
