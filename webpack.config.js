@@ -9,8 +9,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, './airly-collector-app/'),
-        publicPath: '/',
-        filename: '[name].js'
+        filename: '[name].js',
     },
     module: {
         rules: [
@@ -72,7 +71,7 @@ module.exports = {
     devServer: {
         historyApiFallback: true,
         noInfo: true,
-
+        contentBase: path.resolve(__dirname, './airly-collector-app/'),
     },
     performance: {
         hints: false

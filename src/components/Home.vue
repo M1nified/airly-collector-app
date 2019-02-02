@@ -38,7 +38,11 @@
             <md-table-head>Address</md-table-head>
             <md-table-head>Last Update</md-table-head>
           </md-table-row>
-          <md-table-row v-for="(sensor) in sensors" :key="sensor.id">
+          <md-table-row
+            v-for="(sensor) in sensors"
+            :key="sensor.id"
+            @click="goToInstallation(sensor.id)"
+          >
             <md-table-cell class="installation-id">{{sensor.id}}</md-table-cell>
             <md-table-cell>{{sensor.info && sensor.info.address.city}}</md-table-cell>
             <md-table-cell>{{sensor.info && (({city, street, number}) => `${street} ${number}`)(sensor.info.address)}}</md-table-cell>
@@ -72,15 +76,15 @@
               >{{`${sensor.updatedAt.date.toLocaleDateString()} ${sensor.updatedAt.date.toLocaleTimeString()}`}}</md-tooltip>
             </md-table-cell>
             <md-table-cell>
-              <md-button class="md-icon-button" @click="removeSensor(sensor.id)">
+              <md-button class="md-icon-button" @click.stop="removeSensor(sensor.id)">
                 <md-icon>delete</md-icon>
                 <md-tooltip md-direction="top">Remove installation</md-tooltip>
               </md-button>
-              <md-button class="md-icon-button" @click="goToInstallation(sensor.id)">
+              <md-button class="md-icon-button" @click.stop="goToInstallation(sensor.id)">
                 <md-icon>folder_open</md-icon>
                 <md-tooltip md-direction="top">Go to measurements</md-tooltip>
               </md-button>
-              <md-button class="md-icon-button" @click="updateMeasurements(sensor.id)">
+              <md-button class="md-icon-button" @click.stop="updateMeasurements(sensor.id)">
                 <md-icon>cached</md-icon>
                 <md-tooltip md-direction="top">Update</md-tooltip>
               </md-button>
@@ -192,6 +196,7 @@ export default Vue.extend({
       console.log(this.i, sensor);
     },
     goToInstallation(installationId: number) {
+      console.log("goto");
       this.$router.push(`/sensor/${installationId}`);
     },
     installationRemoveFinalize() {},
@@ -274,6 +279,9 @@ export default Vue.extend({
   }
   td.installation-id {
     text-align: right;
+  }
+  td {
+    cursor: pointer;
   }
 }
 .md-dialog {
