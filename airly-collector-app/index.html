@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <title>Airly Collector</title>
     <link rel="manifest" href="/manifest.json">
     <meta charset="utf-8">
     <meta content="width=device-width,initial-scale=1,minimal-ui" name="viewport">
@@ -15,6 +16,21 @@
         <install-prompt-component></install-prompt-component>
         <router-view></router-view>
     </div>
+
+    <script src="https://www.gstatic.com/firebasejs/5.8.2/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.2/firebase-auth.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyB2o14gpOIhNFrwxMr04UshuoZ1Q1qV_GI",
+            authDomain: "airly-collector-app.firebaseapp.com",
+            databaseURL: "https://airly-collector-app.firebaseio.com",
+            projectId: "airly-collector-app",
+            storageBucket: "airly-collector-app.appspot.com",
+            messagingSenderId: "826274980289"
+        };
+        firebase.initializeApp(config);
+    </script>
     <script src="./dist/build.js"></script>
 </body>
 
