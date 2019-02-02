@@ -26,7 +26,6 @@ interface TimeObject {
 export function makeTimeObject(dateTime: string, currentTime: Date): TimeObject {
     const date = new Date(dateTime);
     const diffMs = Math.abs(currentTime.valueOf() - date.valueOf());
-    console.debug(diffMs)
     const diff = {
         milliseconds: diffMs,
         seconds: Math.floor(diffMs / 1000),

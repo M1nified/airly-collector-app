@@ -67,20 +67,34 @@
               >{{sensor.updatedAt.diff.seconds}} second ago</span>
               <span v-else-if="sensor.updatedAt.diff.milliseconds > 0">Now</span>
               <span v-else>Never</span>
+              <md-tooltip md-direction="top">{{`${sensor.updatedAt.date.toLocaleDateString()} ${sensor.updatedAt.date.toLocaleTimeString()}`}}</md-tooltip>
             </md-table-cell>
             <md-table-cell>
               <md-button class="md-icon-button" @click="removeSensor(sensor.id)">
                 <md-icon>delete</md-icon>
+                <md-tooltip md-direction="top">Remove installation</md-tooltip>
               </md-button>
               <md-button class="md-icon-button" @click="goToInstallation(sensor.id)">
                 <md-icon>folder_open</md-icon>
+                <md-tooltip md-direction="top">Go to measurements</md-tooltip>
               </md-button>
               <md-button class="md-icon-button" @click="updateMeasurements(sensor.id)">
                 <md-icon>cached</md-icon>
+                <md-tooltip md-direction="top">Update</md-tooltip>
               </md-button>
             </md-table-cell>
           </md-table-row>
         </md-table>
+      </md-card>
+      <md-card>
+        <md-card-header>
+          <div class="md-title">Global actions</div>
+        </md-card-header>
+        <md-card-content>
+          <md-button class="md-raised md-primary" @click="updateAllMeasurements">
+            <md-icon>cached</md-icon>&nbsp;Update all
+          </md-button>
+        </md-card-content>
       </md-card>
     </my-md-app-component>
     <md-button
@@ -88,6 +102,7 @@
       @click="installationAddStart"
     >
       <md-icon>add</md-icon>
+      <md-tooltip md-direction="left">Add new installation</md-tooltip>
     </md-button>
   </div>
 </template>
@@ -95,10 +110,10 @@
 <script lang="ts">
 import Vue from "vue";
 import Store from "../Store";
-import EditSensorComponent from "./EditSensor.vue";
 import MyMdAppComponent from "./MyMdApp.vue";
 import { updateMeasurements } from "./../airly/AirlyMeasurementsGathering";
 import { makeTimeObject } from "./../time";
+import { App as AppUpdate } from "./../autoupdate";
 
 interface NewInstallationTemplate {
   id?: number | string;
@@ -121,7 +136,6 @@ export default Vue.extend({
     const sensors: any[] = [];
     const apiKey = localStorage.getItem("apiKey");
     const sensorToEdit: any = undefined;
-    console.log(sensors);
     return {
       sensorToEdit,
       sensors,
@@ -134,6 +148,10 @@ export default Vue.extend({
   },
   async created() {
     await this.installationsGetInfo();
+    AppUpdate.subscribeFor("autoupdateAll", () => {
+      console.log("sub dne");
+      this.installationsGetInfo();
+    });
   },
   methods: {
     addSensor() {
@@ -185,7 +203,6 @@ export default Vue.extend({
       this.installationAddDialogActive = true;
     },
     async installationAddDialogSubmit() {
-      debugger;
       console.log("submit");
       this.installationAddDialogActive = false;
       console.log(this.installationAddInstance);
@@ -218,7 +235,6 @@ export default Vue.extend({
               })).updateDateTime,
               currentTime
             );
-            console.debug("UPDATED AT", updatedAt);
             return {
               ...installation,
               info,
@@ -236,12 +252,14 @@ export default Vue.extend({
     async updateMeasurements(installationId: number) {
       await updateMeasurements({ id: installationId });
       this.installationsGetInfo();
+    },
+    async updateAllMeasurements() {
+      AppUpdate.castAutoupdateAll();
     }
   },
   watch: {},
   computed: {},
   components: {
-    EditSensorComponent,
     MyMdAppComponent
   }
 });

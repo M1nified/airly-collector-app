@@ -1,7 +1,7 @@
 <template>
   <div class="view">
     <md-field>
-      <label for="activecolumns">Columns</label>
+      <label for="activecolumns">Active columns</label>
       <md-select v-model="activeColumns" name="activecolumns" id="activecolumns" md-dense multiple>
         <md-option value="From">Since</md-option>
         <md-option value="Till">Till</md-option>
@@ -12,6 +12,7 @@
         <md-option value="PRESSURE">PRESSURE</md-option>
         <md-option value="HUMIDITY">HUMIDITY</md-option>
         <md-option value="TEMPERATURE">TEMPERATURE</md-option>
+        <md-option value="STANDARD_WHO_PM25">WHO PM2.5 %</md-option>
       </md-select>
     </md-field>
     <div class="measurements-table-box">
@@ -27,6 +28,7 @@
             <th v-if="activeColumn('PRESSURE')">PRESSURE</th>
             <th v-if="activeColumn('HUMIDITY')">HUMIDITY</th>
             <th v-if="activeColumn('TEMPERATURE')">TEMPERATURE</th>
+            <th v-if="activeColumn('STANDARD_WHO_PM25')">WHO PM2.5 %</th>
           </tr>
         </thead>
         <tbody>
@@ -45,6 +47,7 @@
             <td v-if="activeColumn('PRESSURE')">{{getRecordValue(record, 'PRESSURE')}}</td>
             <td v-if="activeColumn('HUMIDITY')">{{getRecordValue(record, 'HUMIDITY')}}</td>
             <td v-if="activeColumn('TEMPERATURE')">{{getRecordValue(record, 'TEMPERATURE')}}</td>
+            <td v-if="activeColumn('STANDARD_WHO_PM25')">{{getStandard(record, 'WHO', 'PM25').percent}}</td>
           </tr>
         </tbody>
       </table>
@@ -84,6 +87,8 @@
 <script lang="ts">
 import Vue from "vue";
 import Store from "../Store";
+import { EventBus } from "./../EventBus";
+
 const COLUMNS = [
   "From",
   "Till",
@@ -93,7 +98,8 @@ const COLUMNS = [
   "PM10",
   "PRESSURE",
   "HUMIDITY",
-  "TEMPERATURE"
+  "TEMPERATURE",
+  "STANDARD_WHO_PM25"
 ];
 export default Vue.extend({
   data() {
@@ -116,18 +122,10 @@ export default Vue.extend({
       return !column || column.active;
     });
 
-    Store.Airly.measurements({ id: this.id }).then(measurementRecords => {
-      this.measurementRecords = measurementRecords
-        .map(({ measurement, ...record }) => ({
-          ...record,
-          measurement,
-          AIRLY_CAQI: measurement.indexes.find(
-            ({ name }) => name === "AIRLY_CAQI"
-          )
-        }))
-        .sort((a, b) =>
-          b.measurement.fromDateTime.localeCompare(a.measurement.fromDateTime)
-        );
+    this.getMeasurementsData();
+
+    EventBus.$on(`updated-${this.id}`, () => {
+      this.getMeasurementsData();
     });
   },
   methods: {
@@ -136,10 +134,19 @@ export default Vue.extend({
       console.log(this.detailedRecord);
     },
     getRecordValue(record: any, valueName: string) {
-      const v = record.measurement.values.find(
-        ({ name, value }: { name: string; value: any }) => name === valueName
-      );
+      const v = this.fromArrayByName(record.measurement.values, valueName);
       return v && v.value;
+    },
+    getStandard(record: any, standardName: string, standardPollutant: string) {
+      const standard = record.measurement.standards.find(
+        ({ name, pollutant }) =>
+          name === standardName && pollutant === standardPollutant
+      );
+      return standard || {};
+    },
+    fromArrayByName(array: any[], name: string) {
+      const element = array.find(({ name: n }) => n === name);
+      return element;
     },
     async activeColumnsSave() {
       const activecolumns = COLUMNS.map(COLUMN => {
@@ -154,6 +161,21 @@ export default Vue.extend({
     },
     activeColumn(column: string) {
       return this.activeColumns.some(ac => ac === column);
+    },
+    async getMeasurementsData() {
+      Store.Airly.measurements({ id: this.id }).then(measurementRecords => {
+        this.measurementRecords = measurementRecords
+          .map(({ measurement, ...record }) => ({
+            ...record,
+            measurement,
+            AIRLY_CAQI: measurement.indexes.find(
+              ({ name }) => name === "AIRLY_CAQI"
+            )
+          }))
+          .sort((a, b) =>
+            b.measurement.fromDateTime.localeCompare(a.measurement.fromDateTime)
+          );
+      });
     }
   },
   watch: {

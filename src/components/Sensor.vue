@@ -8,7 +8,9 @@
       <!-- <p class="info-address">{{info.address && `${info.address.country}, ${info.address.city}`}}</p> -->
       <!-- <p class="info-sponsor">{{info.sponsor && info.sponsor.name}}</p> -->
       <p>
-        <md-button @click="updateMeasurements">Update measurements</md-button>
+        <md-button @click="updateMeasurements">
+          <md-icon>cached</md-icon>&nbsp;Update measurements
+        </md-button>
       </p>
       <!-- <div class="md-toolbar-row">
         <md-tabs class="md-primary">
@@ -26,6 +28,8 @@ import Store from "../Store";
 import { AirlyInstallationInfo } from "../airly/AirlyPull";
 import { updateMeasurements } from "./../airly/AirlyMeasurementsGathering";
 import MyMdAppComponent from "./MyMdApp.vue";
+import { EventBus } from "./../EventBus";
+
 export default Vue.extend({
   data() {
     return {
@@ -40,8 +44,9 @@ export default Vue.extend({
     });
   },
   methods: {
-    updateMeasurements() {
-      updateMeasurements({ id: this.id });
+    async updateMeasurements() {
+      await updateMeasurements({ id: this.id });
+      EventBus.$emit(`updated-${this.id}`, null);
     },
     toolbarTitle() {
       let title = "";

@@ -42,7 +42,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-// import MyMdAppDrawerComponent from "./MyMdAppDrawer.vue";
+
 export default Vue.extend({
   props: ["toolbarTitle"],
   data() {
@@ -51,7 +51,6 @@ export default Vue.extend({
     };
   },
   components: {
-    // MyMdAppDrawerComponent
   }
 });
 </script>

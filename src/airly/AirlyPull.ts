@@ -103,6 +103,16 @@ async function getApiKey() {
     }
     return apiKey;
 }
+function actByStatus(statusCode: number) {
+    switch (statusCode) {
+        case 200:
+            break;
+        case 429:
+            console.error('HTTP 429 - Too Many Requests');
+        default:
+            break;
+    }
+}
 export class AirlyPull {
     static async installation(data: InstallationArgument): Promise<AirlyInstallationInfo> {
         let requestInit: RequestInit = {};
@@ -115,6 +125,7 @@ export class AirlyPull {
 
         const response = await fetch(url, requestInit);
         console.debug(response)
+        actByStatus(response.status);
         if (!response.ok) {
             throw "Response failed.";
         }
@@ -132,6 +143,7 @@ export class AirlyPull {
 
         const response = await fetch(url, requestInit);
         console.debug(response)
+        actByStatus(response.status);
         if (!response.ok) {
             throw "Response failed.";
         }
